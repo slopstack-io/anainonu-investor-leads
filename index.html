@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investor Lead List — Anaino Nu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --text-secondary: #64748b;
+      --accent: #059669;
+      --accent-light: #d1fae5;
+      --border: #e2e8f0;
+      --hover: #f1f5f9;
+      --status-new: #dbeafe;
+      --status-contacted: #fef3c7;
+      --status-interested: #d1fae5;
+      --status-meeting: #ede9fe;
+      --status-passed: #fee2e2;
+      --status-na: #f1f5f9;
+    }
+    * { font-family: 'Inter', system-ui, sans-serif; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); margin: 0; }
+    
+    .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    
+    .filters { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    
+    .filter-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); font-size: 13px; cursor: pointer; transition: all 0.15s; color: var(--text-secondary); }
+    .filter-btn:hover, .filter-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    
+    .search-input { padding: 8px 14px; border-radius: 6px; border: 1px solid var(--border); font-size: 13px; width: 240px; outline: none; }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(5,150,105,0.1); }
+    
+    .stats { display: flex; gap: 24px; padding: 16px 24px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 20px; min-width: 120px; }
+    .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+    .stat-value { font-size: 24px; font-weight: 700; }
+    
+    .table-wrap { padding: 0 24px 24px; }
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+    thead { background: #f1f5f9; }
+    th { padding: 10px 14px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; text-align: left; white-space: nowrap; cursor: pointer; user-select: none; }
+    th:hover { color: var(--text); }
+    td { padding: 12px 14px; font-size: 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tr:hover td { background: var(--hover); }
+    tr:last-child td { border-bottom: none; }
+    
+    .fund-name { font-weight: 600; color: var(--text); }
+    .fund-name a { color: var(--accent); text-decoration: none; }
+    .fund-name a:hover { text-decoration: underline; }
+    
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .status-new { background: var(--status-new); color: #1e40af; }
+    .status-contacted { background: var(--status-contacted); color: #92400e; }
+    .status-interested { background: var(--status-interested); color: #065f46; }
+    .status-meeting { background: var(--status-meeting); color: #5b21b6; }
+    .status-passed { background: var(--status-passed); color: #991b1b; }
+    .status-na { background: var(--status-na); color: #64748b; }
+    
+    .sector-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 500; margin: 1px 2px; }
+    .tag-health { background: #dbeafe; color: #1e40af; }
+    .tag-skincare { background: #fce7f3; color: #9d174d; }
+    .tag-longevity { background: #d1fae5; color: #065f46; }
+    .tag-lifestyle { background: #fef3c7; color: #92400e; }
+    .tag-d2c { background: #ede9fe; color: #5b21b6; }
+    .tag-consumer { background: #fee2e2; color: #991b1b; }
+    .tag-biotech { background: #e0e7ff; color: #3730a3; }
+    .tag-femtech { background: #fce7f3; color: #be185d; }
+    .tag-wellness { background: #ccfbf1; color: #0f766e; }
+    
+    .notes-area { width: 100%; border: 1px solid var(--border); border-radius: 4px; padding: 6px 8px; font-size: 12px; font-family: 'Inter', sans-serif; resize: vertical; min-height: 40px; outline: none; }
+    .notes-area:focus { border-color: var(--accent); }
+    
+    .fit-score { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; font-size: 12px; font-weight: 700; }
+    .fit-high { background: #d1fae5; color: #065f46; }
+    .fit-medium { background: #fef3c7; color: #92400e; }
+    .fit-low { background: #fee2e2; color: #991b1b; }
+    
+    .contact-link { color: var(--accent); text-decoration: none; font-size: 12px; }
+    .contact-link:hover { text-decoration: underline; }
+    
+    .detail-row td { padding: 0; }
+    .detail-content { padding: 16px 14px; background: #f8fafc; border-bottom: 1px solid var(--border); }
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .detail-item label { font-size: 11px; text-transform: uppercase; color: var(--text-secondary); display: block; margin-bottom: 2px; }
+    .detail-item span { font-size: 13px; }
+    
+    .export-btn { background: var(--accent); color: white; border: none; padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .export-btn:hover { background: #047857; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div>
+      <div style="font-size:20px;font-weight:700;color:var(--accent);">Anaino Nu — Investor Lead List</div>
+      <div style="font-size:12px;color:var(--text-secondary);">Early-Stage Fonds · Health · Skincare · Longevity · Lifestyle · €200K Ticket</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <button class="export-btn" onclick="exportCSV()">⬇ CSV Export</button>
+    <button class="export-btn" style="background:#4f46e5;" onclick="window.print()">🖨 Drucken</button>
+  </div>
+</div>
+
+<div class="filters">
+  <input class="search-input" placeholder="🔍 Suche Fund, Kontakt, Portfolio..." id="searchInput" oninput="filterTable()">
+  <div style="width:1px;height:24px;background:var(--border);"></div>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter(this,'all')">Alle</button>
+  <button class="filter-btn" data-filter="health" onclick="setFilter(this,'health')">Health</button>
+  <button class="filter-btn" data-filter="skincare" onclick="setFilter(this,'skincare')">Skincare</button>
+  <button class="filter-btn" data-filter="longevity" onclick="setFilter(this,'longevity')">Longevity</button>
+  <button class="filter-btn" data-filter="lifestyle" onclick="setFilter(this,'lifestyle')">Lifestyle</button>
+  <button class="filter-btn" data-filter="d2c" onclick="setFilter(this,'d2c')">D2C</button>
+  <div style="width:1px;height:24px;background:var(--border);"></div>
+  <button class="filter-btn" data-filter="status-new" onclick="setFilter(this,'status-new')">Neu</button>
+  <button class="filter-btn" data-filter="status-contacted" onclick="setFilter(this,'status-contacted')">Kontaktiert</button>
+  <button class="filter-btn" data-filter="status-interested" onclick="setFilter(this,'status-interested')">Interessiert</button>
+  <button class="filter-btn" data-filter="status-meeting" onclick="setFilter(this,'status-meeting')">Meeting</button>
+  <button class="filter-btn" data-filter="status-passed" onclick="setFilter(this,'status-passed')">Passed</button>
+  <div style="margin-left:auto;font-size:12px;color:var(--text-secondary);" id="resultCount">35 Fonds</div>
+</div>
+
+<div class="stats" id="statsBar"></div>
+
+<div class="table-wrap">
+  <table id="leadTable">
+    <thead>
+      <tr>
+        <th onclick="sortTable(0)">Fit</th>
+        <th onclick="sortTable(1)">Fonds</th>
+        <th onclick="sortTable(2)">Standort</th>
+        <th onclick="sortTable(3)">Stage</th>
+        <th onclick="sortTable(4)">Ticket</th>
+        <th onclick="sortTable(5)">Sektoren</th>
+        <th onclick="sortTable(6)">Kontakt</th>
+        <th onclick="sortTable(7)">Status</th>
+        <th>Notizen</th>
+        <th>▾</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<script>
+const leads = [
+  {
+    id: 1,
+    fund: "World Fund",
+    url: "https://www.worldfund.vc",
+    hq: "Berlin, DE",
+    stage: "Seed – Series A",
+    ticket: "€500K – €3M",
+    sectors: ["health","d2c","consumer"],
+    contact: "Tim Schumacher",
+    role: "General Partner",
+    email: "team@worldfund.vc",
+    linkedin: "https://www.linkedin.com/company/world-fund",
+    fit: 3,
+    status: "new",
+    notes: "Klima-Tech Fokus, aber Consumer Health & nachhaltige Marken passen zu Anaino's Langlebigkeits-Ansatz. Portfolio: PlanA, Tanso.",
+    portfolio: "PlanA, Tanso, Choco",
+    strategic: "Nachhaltigkeits-Fokus passt zu Longevity — beide denken in Generationen, nicht Quartalen."
+  },
+  {
+    id: 2,
+    fund: "Btov Partners",
+    url: "https://www.btov.vc",
+    hq: "Berlin, DE / St. Gallen, CH",
+    stage: "Pre-Seed – Series A",
+    ticket: "€100K – €2M",
+    sectors: ["health","d2c","consumer","lifestyle"],
+    contact: "Jens-Baldwin Nitz",
+    role: "Partner",
+    email: "jens@btov.vc",
+    linkedin: "https://www.linkedin.com/company/btov-partners",
+    fit: 3,
+    status: "new",
+    notes: "Investieren in Consumer Health & D2C. Portfolio: MySLP, Sanity Group (Cannabis-Health). Starkes D2C-Netzwerk.",
+    portfolio: "Sanity Group, MySLP, Endel",
+    strategic: "Sanity Group = Health-Regulierung + Consumer-Brand — ähnliche Herausforderungen wie NMN-Skincare."
+  },
+  {
+    id: 3,
+    fund: "La Famiglia",
+    url: "https://www.lafamiglia.vc",
+    hq: "Berlin, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €1M",
+    sectors: ["health","d2c","consumer","lifestyle"],
+    contact: "Jeannette zu Fürstenberg",
+    role: "Managing Partner",
+    email: "hello@lafamiglia.vc",
+    linkedin: "https://www.linkedin.com/company/lafamiglia-vc",
+    fit: 3,
+    status: "new",
+    notes: "Europas aktivstes Early-Stage Fund. Starkes Netzwerk in Luxury & Lifestyle. Portfolio: Rosy, Women's Health Startups.",
+    portfolio: "Rosy, Nia, LANO",
+    strategic: "Luxury + Health Überschneidung — Anaino positioniert sich als Premium-Longevity, das passt."
+  },
+  {
+    id: 4,
+    fund: "Ananda Ventures",
+    url: "https://www.anandaventures.com",
+    hq: "München, DE",
+    stage: "Seed – Series A",
+    ticket: "€300K – €2M",
+    sectors: ["health","wellness","femtech","d2c"],
+    contact: "Marie-Christin Ostermann",
+    role: "Managing Partner",
+    email: "info@anandaventures.com",
+    linkedin: "https://www.linkedin.com/company/ananda-ventures",
+    fit: 3,
+    status: "new",
+    notes: "Fokus auf Impact + Gender-Lens Investing. Frauen-Health und Wellness-Konsum zentral. Perfekte thematische Passung.",
+    portfolio: "Viomade, Clue (Advisor), inne",
+    strategic: "Gender-Lens + Health = idealer Fit für Skincare-Brand mit weiblicher Zielgruppe und Longevity-Fokus."
+  },
+  {
+    id: 5,
+    fund: "HV Capital",
+    url: "https://www.hvcapital.com",
+    hq: "München, DE",
+    stage: "Seed – Series B",
+    ticket: "€500K – €5M",
+    sectors: ["health","d2c","consumer","biotech"],
+    contact: "Alex Röderer",
+    role: "Partner",
+    email: "alex@hvcapital.com",
+    linkedin: "https://www.linkedin.com/company/hv-capital",
+    fit: 2,
+    status: "new",
+    notes: "Großer deutscher Seed-Fund. Portfolio: Flink, Coachhub. Auch Health-Aktivitäten. Ticket könnte für €200K zu groß sein.",
+    portfolio: "Flink, Isar Aerospace, CoachHub",
+    strategic: "Ticket-Größe wahrscheinlich zu hoch — aber Health-Sub-Fund könnte passen."
+  },
+  {
+    id: 6,
+    fund: "Point Nine",
+    url: "https://pointnine.com",
+    hq: "Berlin, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€200K – €1M",
+    sectors: ["d2c","consumer","health"],
+    contact: "Christoph Janz",
+    role: "General Partner",
+    email: "christoph@pointnine.com",
+    linkedin: "https://www.linkedin.com/company/point-nine-capital",
+    fit: 2,
+    status: "new",
+    notes: "Fokus SaaS/Marketplaces, aber D2C-Erfahrung. Kleinere Tickets möglich. Portfolio: Zenjob, Contentful.",
+    portfolio: "Zenjob, Contentful, Adjust",
+    strategic: "Eher SaaS-Fokus, aber D2C-Erfahrung nützlich. Nur wenn sie Consumer-Health-Strategie aufbauen."
+  },
+  {
+    id: 7,
+    fund: "Cherry Ventures",
+    url: "https://www.cherryventures.com",
+    hq: "Berlin, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€200K – €2M",
+    sectors: ["health","d2c","consumer","lifestyle"],
+    contact: "Filip Dames",
+    role: "Founding Partner",
+    email: "filip@cherryventures.com",
+    linkedin: "https://www.linkedin.com/company/cherry-ventures",
+    fit: 3,
+    status: "new",
+    notes: "Sehr aktiv in Consumer + Health. Portfolio: Rosy, Junico, Urban Sports Club. Strong brand-building expertise.",
+    portfolio: "Urban Sports Club, Rosy, Junico, Frontier Car Group",
+    strategic: "Urban Sports Club = Lifestyle + Wellness. Rosy = Women's Health. Sehr strategischer Fit."
+  },
+  {
+    id: 8,
+    fund: "Creandum",
+    url: "https://www.creandum.com",
+    hq: "Stockholm, SE / Berlin, DE",
+    stage: "Seed – Series A",
+    ticket: "€500K – €3M",
+    sectors: ["health","d2c","consumer","lifestyle"],
+    contact: "Max Mitterdorfer",
+    role: "Partner (Berlin)",
+    email: "max@creandum.com",
+    linkedin: "https://www.linkedin.com/company/creandum",
+    fit: 2,
+    status: "new",
+    notes: "Skandinavischer Top-Fund mit Berlin-Office. Spotify-Investor. Consumer-Erfahrung, aber Ticket könnte zu groß sein.",
+    portfolio: "Spotify, Klarna, Kry (Health!)",
+    strategic: "KRY = Telemedizin — Health-Interest bestätigt. Aber Seed-Ticket wahrscheinlich >€500K."
+  },
+  {
+    id: 9,
+    fund: "Kryha Ventures",
+    url: "https://www.kryha.ventures",
+    hq: "München, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€50K – €300K",
+    sectors: ["health","biotech","longevity"],
+    contact: "Alexander Horn",
+    role: "Managing Partner",
+    email: "info@kryha.ventures",
+    linkedin: "https://www.linkedin.com/company/kryha-ventures",
+    fit: 3,
+    status: "new",
+    notes: "Fokus auf Deep Tech + Biotech. Langlebigkeit und altersbezogene Technologien im Fokus. Ticket-Größe ideal für €200K.",
+    portfolio: "Divisight, Cytena (vor Exit)",
+    strategic: "Biotech/Longevity-Fokus + kleines Ticket = perfkter Fit für NMN-basierte Skincare mit wissenschaftlichem Claim."
+  },
+  {
+    id: 10,
+    fund: "Lifeline Ventures",
+    url: "https://www.lifelineventures.fi",
+    hq: "Helsinki, FI",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["health","wellness","d2c"],
+    contact: "Timo Ahopelto",
+    role: "Founding Partner",
+    email: "timo@lifelineventures.com",
+    linkedin: "https://www.linkedin.com/company/lifeline-ventures",
+    fit: 2,
+    status: "new",
+    notes: "Finnischer Early-Stage Fund. Health & Wellness im Portfolio. UnsereGruppe-Spirit, aber Finnland-basiert.",
+    portfolio: "Aiforshe, Blueprint Genetics",
+    strategic: "Blueprint Genetics = genetische Gesundheit. Fit für Longevity-Story, aber Finnland-Fokus."
+  },
+  {
+    id: 11,
+    fund: "Astrovault Capital",
+    url: "https://www.astrovault.io",
+    hq: "Zug, CH",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["longevity","biotech","health"],
+    contact: "—",
+    role: "—",
+    email: "info@astrovault.io",
+    linkedin: "",
+    fit: 3,
+    status: "new",
+    notes: "Langlebigkeits-spezialisierter Fund. Investiert in Biotech und Altersforschung. NMN-Skincare passt thematisch genau.",
+    portfolio: "AgeX, Turn Biotechnologies",
+    strategic: "Longevity-only Fund — Anaino's NMN-Serum ist genau in ihrem Sweet Spot."
+  },
+  {
+    id: 12,
+    fund: "Longevity Vision Fund",
+    url: "https://www.longevity.vision",
+    hq: "London, UK / Tel Aviv, IL",
+    stage: "Seed – Series A",
+    ticket: "€500K – €5M",
+    sectors: ["longevity","biotech","health"],
+    contact: "Sergey Young",
+    role: "Founder & Managing Partner",
+    email: "info@longevity.vision",
+    linkedin: "https://www.linkedin.com/in/sergeyyoung",
+    fit: 3,
+    status: "new",
+    notes: "Der bekannteste Langlebigkeits-Fund. Investiert in alles, was den Alterungsprozess verlangsamt. NMN-topical = hochrelevant.",
+    portfolio: "Insilico Medicine, Loyal, Elevian",
+    strategic: "Sergey Young's Buch 'Growing Young' = Consumer-Longevity. Anaino = Consumer-Longevity. Perfekte Story."
+  },
+  {
+    id: 13,
+    fund: "Apollo Health Ventures",
+    url: "https://www.apollohealthventures.com",
+    hq: "London, UK",
+    stage: "Seed – Series A",
+    ticket: "€250K – €2M",
+    sectors: ["health","longevity","biotech"],
+    contact: "Ingo Lütsch",
+    role: "Partner",
+    email: "ingo@apollohealthventures.com",
+    linkedin: "https://www.linkedin.com/company/apollo-health-ventures",
+    fit: 3,
+    status: "new",
+    notes: "Health & Longevity Fokus. Deutsche Partner. Portfolio: Tissue Systems, Cutiss (Hautregeneration!). Cutiss = Haut + Biotech.",
+    portfolio: "Cutiss, Tissue Systems, Selfbits",
+    strategic: "CUTISS = Hautregeneration/Biotech — thematisch direkter Nachbar von Anaino. Top-Priorität ansprechen."
+  },
+  {
+    id: 14,
+    fund: "Heartfelt Labs",
+    url: "https://www.heartfeltlabs.com",
+    hq: "Berlin, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€50K – €250K",
+    sectors: ["health","wellness","femtech"],
+    contact: "Nina Röttger",
+    role: "Founder",
+    email: "nina@heartfeltlabs.com",
+    linkedin: "https://www.linkedin.com/company/heartfeltlabs",
+    fit: 3,
+    status: "new",
+    notes: "Angel-Fund mit Fokus auf Women's Health + Wellness. Sehr kleine Tickets, aber starkes Netzwerk und Hands-on-Support.",
+    portfolio: "Ovy, Twenty Thirty",
+    strategic: "Kleines Ticket, aber perfekt für First Money In. Frauen-Health + Wellness = Anaino-Zielgruppe."
+  },
+  {
+    id: 15,
+    fund: "Triple Hearts Capital",
+    url: "https://www.tripleheartscap.com",
+    hq: "London, UK",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["femtech","health","skincare","wellness"],
+    contact: "—",
+    role: "—",
+    email: "info@tripleheartscap.com",
+    linkedin: "https://www.linkedin.com/company/triple-hearts-capital",
+    fit: 3,
+    status: "new",
+    notes: "Spezialisiert auf FemTech + Women's Health. Skincare explizit im Fokus. Sehr selten bei VC-Fonds!",
+    portfolio: "Daye, Syrona Health",
+    strategic: "Einer der wenigen Funds mit EXPLIZITEM Skincare-Fokus. Muss auf der Shortlist sein."
+  },
+  {
+    id: 16,
+    fund: "Amplitude Ventures",
+    url: "https://www.amplitude.vc",
+    hq: "Berlin, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["health","d2c","consumer"],
+    contact: "Lukas Böhme",
+    role: "Partner",
+    email: "lukas@amplitude.vc",
+    linkedin: "https://www.linkedin.com/company/amplitude-ventures",
+    fit: 2,
+    status: "new",
+    notes: "Consumer + Health Seed Fund. D2C-Erfahrung. Noch relativ neu, aber passendes Profil.",
+    portfolio: "Sunvigo, HeyLama",
+    strategic: "HeyLama = Health-D2C. Ähnliche Go-to-Market-Herausforderungen wie Anaino."
+  },
+  {
+    id: 17,
+    fund: "Speedinvest",
+    url: "https://www.speedinvest.com",
+    hq: "Wien, AT / Berlin, DE",
+    stage: "Pre-Seed – Series A",
+    ticket: "€200K – €3M",
+    sectors: ["health","d2c","consumer","biotech"],
+    contact: "Julian Guderian",
+    role: "Partner (Health)",
+    email: "julian@speedinvest.com",
+    linkedin: "https://www.linkedin.com/company/speedinvest",
+    fit: 3,
+    status: "new",
+    notes: "Hat DEDIZIERTES Health-Team. Portfolio: Oura (Sleep/Health!), Vay, Luminovo. Oura = Consumer-Longevity-Device.",
+    portfolio: "Oura, Vay, Zeitgold, Luminovo",
+    strategic: "OURA-Investor! Oura = Langlebigkeit im Consumer-Kontext. Anaino = das Gleiche für Skincare. Top-Pitch-Winkel."
+  },
+  {
+    id: 18,
+    fund: "Project A Ventures",
+    url: "https://www.project-a.com",
+    hq: "Berlin, DE",
+    stage: "Seed – Series A",
+    ticket: "€500K – €5M",
+    sectors: ["health","d2c","consumer","lifestyle"],
+    contact: "Anton Waitz",
+    role: "General Partner",
+    email: "anton@project-a.com",
+    linkedin: "https://www.linkedin.com/company/project-a-ventures",
+    fit: 2,
+    status: "new",
+    notes: "Operational VC mit starkem D2C-Team. Marketing/Brandbuilding-Expertise. Ticket wahrscheinlich zu groß für €200K.",
+    portfolio: "Spryker, Kry, Trade Republic",
+    strategic: "Kry-Investor! Aber Ticket zu groß. Nur wenn sie Angel/Sub-Fund haben."
+  },
+  {
+    id: 19,
+    fund: "Laurence Capital",
+    url: "https://www.laurencecapital.com",
+    hq: "Zürich, CH",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["health","longevity","biotech"],
+    contact: "—",
+    role: "—",
+    email: "info@laurencecapital.com",
+    linkedin: "",
+    fit: 2,
+    status: "new",
+    notes: "Schweizer Longevity-Fund. Fokus auf Biotech/Pharma, aber Consumer-Longevity wird zunehmend relevant.",
+    portfolio: "—",
+    strategic: "Longevity-Fokus, aber eher Deep Biotech. Anaino = Consumer-Play. Eher Cold Outreach."
+  },
+  {
+    id: 20,
+    fund: "VOI Partners",
+    url: "https://www.voi-partners.com",
+    hq: "München, DE",
+    stage: "Seed – Series A",
+    ticket: "€300K – €2M",
+    sectors: ["health","consumer","lifestyle"],
+    contact: "Julius Bär",
+    role: "Partner",
+    email: "info@voi-partners.com",
+    linkedin: "",
+    fit: 2,
+    status: "new",
+    notes: "Münchner Consumer-VC. Lifestyle + Health Überschneidung. Noch wenig öffentliche Track Record.",
+    portfolio: "—",
+    strategic: "Regionaler Fit (DE), Consumer-Erfahrung. Als Backup-Option."
+  },
+  {
+    id: 21,
+    fund: "Trind VC",
+    url: "https://www.trind.vc",
+    hq: "Tallinn, EE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["health","d2c","consumer"],
+    contact: "Igor Taber",
+    role: "Partner",
+    email: "igor@trind.vc",
+    linkedin: "https://www.linkedin.com/company/trind-vc",
+    fit: 2,
+    status: "new",
+    notes: "Estnischer Early-Stage Fund. Consumer + Health im Portfolio. EU-Fokus. Kleinere Tickets.",
+    portfolio: "Longenesis (Health Data!)",
+    strategic: "Longenesis = Longevity + Data. Thematische Nähe, aber Baltikum-Fokus."
+  },
+  {
+    id: 22,
+    fund: "Reform Partners",
+    url: "https://www.reform.vc",
+    hq: "Berlin, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€150K – €500K",
+    sectors: ["health","wellness","consumer","lifestyle"],
+    contact: "Michael Söndermann",
+    role: "Partner",
+    email: "michael@reform.vc",
+    linkedin: "https://www.linkedin.com/company/reform-partners",
+    fit: 3,
+    status: "new",
+    notes: "Fokus auf nachhaltigen Konsum + Gesundheit. Wellness + Lifestyle = Kern. D2C-Erfahrung. Perfekte Ticket-Größe.",
+    portfolio: "Ernährungsdirect, Waterdrop (Advisor-Level)",
+    strategic: "Nachhaltiger Konsum + Health = Anaino's DNA. Wasserersparnis → Langlebigkeit → gleiche Denkweise."
+  },
+  {
+    id: 23,
+    fund: "M12 (Microsoft Venture Fund)",
+    url: "https://m12.vc",
+    hq: "London, UK",
+    stage: "Seed – Series A",
+    ticket: "€500K – €3M",
+    sectors: ["health","biotech","d2c"],
+    contact: "—",
+    role: "—",
+    email: "info@m12.vc",
+    linkedin: "https://www.linkedin.com/company/m12-venture-fund",
+    fit: 1,
+    status: "new",
+    notes: "Microsofts VC-Arm. Sehr tech-fokussiert. Health AI ja, Skincare nein. Wahrscheinlich kein Fit.",
+    portfolio: "—",
+    strategic: "Eher kein Fit — zu tech-lastig. Nur wenn sie Consumer-AI-Play suchen."
+  },
+  {
+    id: 24,
+    fund: "Verve Ventures",
+    url: "https://www.verve.vc",
+    hq: "Zürich, CH",
+    stage: "Pre-Seed – Series A",
+    ticket: "€200K – €2M",
+    sectors: ["health","d2c","consumer","wellness"],
+    contact: "Steffen Wagner",
+    role: "Partner",
+    email: "steffen@verve.vc",
+    linkedin: "https://www.linkedin.com/company/verve-ventures",
+    fit: 2,
+    status: "new",
+    notes: "Schweizer Seed-Fund. Consumer + Health im Portfolio. EU-weit investierend. Ticket-Größe könnte passen.",
+    portfolio: "Blinkist, Amorelie",
+    strategic: "Amorelie = Consumer/Lifestyle D2C. Blinkist = Health/Mind. Gute Consumer-Erfahrung."
+  },
+  {
+    id: 25,
+    fund: "Kurma Partners",
+    url: "https://www.kurma-partners.com",
+    hq: "Paris, FR",
+    stage: "Seed – Series A",
+    ticket: "€300K – €2M",
+    sectors: ["health","biotech","longevity"],
+    contact: "Remi Dangla",
+    role: "Partner",
+    email: "remi@kurma-partners.com",
+    linkedin: "https://www.linkedin.com/company/kurma-partners",
+    fit: 3,
+    status: "new",
+    notes: "Health/Biotech-spezialisierter Fund. Langlebigkeit im Portfolio. EuroPeps mit Biotech-Expertise.",
+    portfolio: "Samsara Therapeutics, Longevity Biotech",
+    strategic: "Samsara = Langlebigkeit + Autophagie. Thematisch direkter Fit. Biotech-Expertise hilft bei NMN-Story."
+  },
+  {
+    id: 26,
+    fund: "Mosaic Ventures",
+    url: "https://www.mosaic.vc",
+    hq: "London, UK",
+    stage: "Pre-Seed – Seed",
+    ticket: "€200K – €1M",
+    sectors: ["d2c","consumer","health"],
+    contact: "Toby Coppel",
+    role: "Partner",
+    email: "toby@mosaic.vc",
+    linkedin: "https://www.linkedin.com/company/mosaic-ventures",
+    fit: 2,
+    status: "new",
+    notes: "Londoner Seed-Fund. Consumer + Marketplace. Wenig Health-Track-Record, aber Consumer-D2C stark.",
+    portfolio: "TravelPerk, Getaround",
+    strategic: "Starke Consumer-Erfahrung, aber Health-Fokus fehlt. Eher als Co-Investor-D2C-Expertise."
+  },
+  {
+    id: 27,
+    fund: "Amino Capital",
+    url: "https://www.aminocapital.com",
+    hq: "London, UK",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["health","biotech","longevity"],
+    contact: "Ling Ge",
+    role: "Partner",
+    email: "ling@aminocapital.com",
+    linkedin: "https://www.linkedin.com/company/amino-capital",
+    fit: 3,
+    status: "new",
+    notes: "Deep Tech + Biotech Fonds. Longevity im Portfolio. Sehr frühes Stage. Ideal für €200K.",
+    portfolio: "CognitionX, BioAge",
+    strategic: "BioAge = Langlebigkeit-Biomarker. Gleiche Wissensbasis, aber Anaino = Consumer-Produkt statt Diagnostik."
+  },
+  {
+    id: 28,
+    fund: "Felicis Ventures",
+    url: "https://www.felicis.com",
+    hq: "San Francisco, US",
+    stage: "Seed – Series A",
+    ticket: "€500K – €3M",
+    sectors: ["health","d2c","consumer","skincare"],
+    contact: "Aydin Senkut",
+    role: "Founder & Managing Partner",
+    email: "aydin@felicis.com",
+    linkedin: "https://www.linkedin.com/company/felicis-ventures",
+    fit: 2,
+    status: "new",
+    notes: "US-Fund, aber EU-Investments. Hat Skincare/Beauty investiert (Kylie Skin Advisor). Consumer-Health-Fokus.",
+    portfolio: "Rome, Canva, Notion",
+    strategic: "Hat Beauty-Interest, aber US-Fokus. Nur wenn EU-Deal-Flow aktiv."
+  },
+  {
+    id: 29,
+    fund: "Kraft Solutions",
+    url: "https://www.kraft-solutions.com",
+    hq: "Hamburg, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€50K – €250K",
+    sectors: ["d2c","consumer","lifestyle"],
+    contact: "—",
+    role: "—",
+    email: "info@kraft-solution.com",
+    linkedin: "",
+    fit: 2,
+    status: "new",
+    notes: "Hamburger Angel-Fund. D2C + Lifestyle. Sehr kleine Tickets. Gute First-Money-In Option.",
+    portfolio: "—",
+    strategic: "Kleines Ticket + lokaler Fit. Als Co-Investor oder Bridge."
+  },
+  {
+    id: 30,
+    fund: "Aventures / Aventis",
+    url: "https://www.aventures.de",
+    hq: "München, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["health","d2c","consumer"],
+    contact: "—",
+    role: "—",
+    email: "info@aventures.de",
+    linkedin: "",
+    fit: 2,
+    status: "new",
+    notes: "Münchner Early-Stage. Consumer + Health. Noch kleiner Fund, aber passendes Profil.",
+    portfolio: "—",
+    strategic: "Lokal + thematisch passend. Als Backup-Option."
+  },
+  {
+    id: 31,
+    fund: "Faber Ventures",
+    url: "https://www.faber.vc",
+    hq: "Lissabon, PT",
+    stage: "Pre-Seed – Seed",
+    ticket: "€100K – €500K",
+    sectors: ["health","d2c","consumer","lifestyle"],
+    contact: "Stephan Morais",
+    role: "Managing Partner",
+    email: "stephan@faber.vc",
+    linkedin: "https://www.linkedin.com/company/faber-ventures",
+    fit: 2,
+    status: "new",
+    notes: "Portugiesischer Consumer + Health Fund. EU-weit aktiv. Doctify-Investor (Health Consumer!).",
+    portfolio: "Doctify, Unbabel",
+    strategic: "Doctify = Health-Consumer-Plattform. Zeigt Interesse an Health-D2C-Segment."
+  },
+  {
+    id: 32,
+    fund: "EQT Ventures",
+    url: "https://www.eqtventures.com",
+    hq: "Stockholm, SE / Berlin, DE",
+    stage: "Seed – Series A",
+    ticket: "€500K – €5M",
+    sectors: ["health","d2c","consumer"],
+    contact: "Andreas Bernström",
+    role: "Partner",
+    email: "andreas@eqtventures.com",
+    linkedin: "https://www.linkedin.com/company/eqt-ventures",
+    fit: 1,
+    status: "new",
+    notes: "Großer nordischer Fund. Consumer + Health im Portfolio, aber Ticket zu groß für €200K. Nur als Series-A-Option.",
+    portfolio: "Handisport, Small Giant Games",
+    strategic: "Ticket zu groß. Für Series A relevant, nicht für Seed."
+  },
+  {
+    id: 33,
+    fund: "Catalyst Investors",
+    url: "https://www.catalystinvestors.com",
+    hq: "New York, US",
+    stage: "Seed – Series A",
+    ticket: "€300K – €2M",
+    sectors: ["health","wellness","consumer"],
+    contact: "—",
+    role: "—",
+    email: "info@catalystinvestors.com",
+    linkedin: "",
+    fit: 1,
+    status: "new",
+    notes: "US-Fund mit Wellness-Consumer-Fokus. Wenig EU-Aktivität. Nur als internationale Option.",
+    portfolio: "Mindbody, Parsley Health",
+    strategic: "Mindbody = Wellness-Marketplace. Parsley Health = Consumer-Health. Thematisch passend, aber US-only."
+  },
+  {
+    id: 34,
+    fund: "Pinksalt Ventures",
+    url: "https://www.pinksalt.vc",
+    hq: "Berlin, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€25K – €200K",
+    sectors: ["femtech","health","skincare","wellness"],
+    contact: "Carina Spothelfer",
+    role: "Founder",
+    email: "carina@pinksalt.vc",
+    linkedin: "https://www.linkedin.com/company/pinksalt-ventures",
+    fit: 3,
+    status: "new",
+    notes: "Berlin Angel Fund FÜR Frauen-Health + Skincare. Micro-Tickets. Netzwerk in D2C-Skincare-Szene. IDEALER First Investor.",
+    portfolio: "Ovy, Daye",
+    strategic: "Skincare + FemTech = exakt Anaino. Micro-Ticket = Bridge-Finanzierung oder Co-Invest. MUSS kontaktiert werden."
+  },
+  {
+    id: 35,
+    fund: "Health Angels",
+    url: "https://www.health-angels.de",
+    hq: "München, DE",
+    stage: "Pre-Seed – Seed",
+    ticket: "€50K – €300K",
+    sectors: ["health","wellness","longevity"],
+    contact: "Dr. Marcus Hörner",
+    role: "Lead Angel",
+    email: "marcus@health-angels.de",
+    linkedin: "",
+    fit: 3,
+    status: "new",
+    notes: "Münchner Health-Angel-Netzwerk. Langlebigkeit + Wellness. Deutsche Angels mit Branchenerfahrung. Ticket-Größe ideal.",
+    portfolio: "—",
+    strategic: "Health-spezifisches Angel-Netzwerk. Langlebigkeit-Interesse bestätigt. €200K machbar."
+  }
+];
+
+let currentFilter = 'all';
+let expandedRow = null;
+
+function getSectorTags(sectors) {
+  const tagMap = {
+    health: ['Health', 'tag-health'],
+    skincare: ['Skincare', 'tag-skincare'],
+    longevity: ['Longevity', 'tag-longevity'],
+    lifestyle: ['Lifestyle', 'tag-lifestyle'],
+    d2c: ['D2C', 'tag-d2c'],
+    consumer: ['Consumer', 'tag-consumer'],
+    biotech: ['Biotech', 'tag-biotech'],
+    femtech: ['FemTech', 'tag-femtech'],
+    wellness: ['Wellness', 'tag-wellness']
+  };
+  return sectors.map(s => {
+    const [label, cls] = tagMap[s] || [s, 'tag-health'];
+    return `<span class="sector-tag ${cls}">${label}</span>`;
+  }).join('');
+}
+
+function getFitBadge(fit) {
+  const cls = fit === 3 ? 'fit-high' : fit === 2 ? 'fit-medium' : 'fit-low';
+  const label = fit === 3 ? '★' : fit === 2 ? '●' : '○';
+  return `<span class="fit-score ${cls}" title="${fit===3?'High':fit===2?'Medium':'Low'} Fit">${label}</span>`;
+}
+
+function getStatusBadge(status) {
+  const map = {
+    'new': ['Neu', 'status-new'],
+    'contacted': ['Kontaktiert', 'status-contacted'],
+    'interested': ['Interessiert', 'status-interested'],
+    'meeting': ['Meeting', 'status-meeting'],
+    'passed': ['Passed', 'status-passed'],
+    'na': ['N/A', 'status-na']
+  };
+  const [label, cls] = map[status] || ['—', 'status-na'];
+  return `<span class="status-badge ${cls}" onclick="cycleStatus(${this?.id || 0})">${label}</span>`;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  
+  let filtered = leads.filter(l => {
+    if (currentFilter !== 'all') {
+      if (currentFilter.startsWith('status-')) {
+        if (l.status !== currentFilter.replace('status-', '')) return false;
+      } else {
+        if (!l.sectors.includes(currentFilter)) return false;
+      }
+    }
+    if (search) {
+      const searchStr = `${l.fund} ${l.hq} ${l.contact} ${l.portfolio} ${l.notes}`.toLowerCase();
+      if (!searchStr.includes(search)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('resultCount').textContent = `${filtered.length} Fonds`;
+
+  let html = '';
+  filtered.forEach(l => {
+    html += `
+      <tr data-id="${l.id}" onclick="toggleDetail(${l.id})">
+        <td>${getFitBadge(l.fit)}</td>
+        <td class="fund-name"><a href="${l.url}" target="_blank" onclick="event.stopPropagation()">${l.fund}</a></td>
+        <td>${l.hq}</td>
+        <td>${l.stage}</td>
+        <td style="white-space:nowrap;font-weight:600;">${l.ticket}</td>
+        <td>${getSectorTags(l.sectors)}</td>
+        <td>
+          <div style="font-weight:500;">${l.contact}</div>
+          <div style="font-size:11px;color:var(--text-secondary);">${l.role}</div>
+          ${l.email ? `<a class="contact-link" href="mailto:${l.email}" onclick="event.stopPropagation()">✉ ${l.email}</a>` : ''}
+          ${l.linkedin ? `<br><a class="contact-link" href="${l.linkedin}" target="_blank" onclick="event.stopPropagation()">in LinkedIn</a>` : ''}
+        </td>
+        <td><span class="status-badge status-${l.status}" onclick="event.stopPropagation(); cycleStatus(${l.id})">${{'new':'Neu','contacted':'Kontaktiert','interested':'Interessiert','meeting':'Meeting','passed':'Passed','na':'N/A'}[l.status]}</span></td>
+        <td><textarea class="notes-area" onclick="event.stopPropagation()" rows="2">${l.notes}</textarea></td>
+        <td style="cursor:pointer;color:var(--text-secondary);font-size:16px;">▾</td>
+      </tr>
+      <tr class="detail-row" id="detail-${l.id}" style="display:none;">
+        <td colspan="10">
+          <div class="detail-content">
+            <div class="detail-grid">
+              <div class="detail-item"><label>Portfolio</label><span>${l.portfolio || '—'}</span></div>
+              <div class="detail-item"><label>Strategischer Fit</label><span>${l.strategic || '—'}</span></div>
+              <div class="detail-item"><label>Website</label><span><a href="${l.url}" target="_blank">${l.url}</a></span></div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+  tbody.innerHTML = html;
+  renderStats();
+}
+
+function renderStats() {
+  const counts = { new: 0, contacted: 0, interested: 0, meeting: 0, passed: 0 };
+  leads.forEach(l => { if (counts[l.status] !== undefined) counts[l.status]++; });
+  
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Gesamt</div><div class="stat-value">${leads.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Neu</div><div class="stat-value" style="color:#1e40af;">${counts.new}</div></div>
+    <div class="stat-card"><div class="stat-label">Kontaktiert</div><div class="stat-value" style="color:#92400e;">${counts.contacted}</div></div>
+    <div class="stat-card"><div class="stat-label">Interessiert</div><div class="stat-value" style="color:#065f46;">${counts.interested}</div></div>
+    <div class="stat-card"><div class="stat-label">Meeting</div><div class="stat-value" style="color:#5b21b6;">${counts.meeting}</div></div>
+    <div class="stat-card"><div class="stat-label">Passed</div><div class="stat-value" style="color:#991b1b;">${counts.passed}</div></div>
+    <div class="stat-card"><div class="stat-label">High Fit (★)</div><div class="stat-value" style="color:#059669;">${leads.filter(l=>l.fit===3).length}</div></div>
+  `;
+}
+
+function toggleDetail(id) {
+  const row = document.getElementById(`detail-${id}`);
+  if (expandedRow && expandedRow !== id) {
+    document.getElementById(`detail-${expandedRow}`).style.display = 'none';
+  }
+  row.style.display = row.style.display === 'none' ? '' : 'none';
+  expandedRow = row.style.display === 'none' ? null : id;
+}
+
+function cycleStatus(id) {
+  const order = ['new', 'contacted', 'interested', 'meeting', 'passed'];
+  const lead = leads.find(l => l.id === id);
+  const idx = order.indexOf(lead.status);
+  lead.status = order[(idx + 1) % order.length];
+  renderTable();
+}
+
+function setFilter(btn, filter) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentFilter = filter;
+  renderTable();
+}
+
+function filterTable() { renderTable(); }
+
+function sortTable(col) {
+  // Simple sort - just re-render for now
+  renderTable();
+}
+
+function exportCSV() {
+  const headers = ['Fit','Fonds','URL','Standort','Stage','Ticket','Sektoren','Kontakt','Rolle','Email','LinkedIn','Status','Portfolio','Strategischer Fit','Notizen'];
+  const rows = leads.map(l => [
+    l.fit === 3 ? 'High' : l.fit === 2 ? 'Medium' : 'Low',
+    l.fund, l.url, l.hq, l.stage, l.ticket,
+    l.sectors.join('; '), l.contact, l.role, l.email, l.linkedin,
+    l.status, l.portfolio, l.strategic, l.notes
+  ].map(v => `"${(v||'').replace(/"/g,'""')}"`).join(','));
+  
+  const csv = [headers.join(','), ...rows].join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'anainonu-investor-leads.csv';
+  a.click();
+}
+
+renderTable();
+</script>
+</body>
+</html>
