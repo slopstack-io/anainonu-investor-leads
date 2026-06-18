@@ -54,13 +54,22 @@
     .fund-name a { color: var(--accent); text-decoration: none; }
     .fund-name a:hover { text-decoration: underline; }
     
-    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .status-dropdown { position: relative; display: inline-block; }
+    .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; border: none; user-select: none; }
+    .status-badge:hover { filter: brightness(0.95); transform: scale(1.05); }
+    .status-badge::after { content: '▾'; font-size: 10px; margin-left: 2px; opacity: 0.6; }
     .status-new { background: var(--status-new); color: #1e40af; }
     .status-contacted { background: var(--status-contacted); color: #92400e; }
     .status-interested { background: var(--status-interested); color: #065f46; }
     .status-meeting { background: var(--status-meeting); color: #5b21b6; }
     .status-passed { background: var(--status-passed); color: #991b1b; }
     .status-na { background: var(--status-na); color: #64748b; }
+    .status-menu { position: absolute; top: 100%; left: 0; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); z-index: 200; min-width: 160px; padding: 4px; display: none; }
+    .status-menu.open { display: block; }
+    .status-menu-item { padding: 7px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: background 0.1s; }
+    .status-menu-item:hover { background: var(--hover); }
+    .status-menu-item.active { background: var(--hover); font-weight: 700; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     
     .sector-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 500; margin: 1px 2px; }
     .tag-health { background: #dbeafe; color: #1e40af; }
@@ -810,17 +819,28 @@ function getFitBadge(fit) {
   return `<span class="fit-score ${cls}" title="${fit===3?'High':fit===2?'Medium':'Low'} Fit">${label}</span>`;
 }
 
-function getStatusBadge(status) {
+function getStatusBadge(status, id) {
   const map = {
-    'new': ['Neu', 'status-new'],
-    'contacted': ['Kontaktiert', 'status-contacted'],
-    'interested': ['Interessiert', 'status-interested'],
-    'meeting': ['Meeting', 'status-meeting'],
-    'passed': ['Passed', 'status-passed'],
-    'na': ['N/A', 'status-na']
+    'new': ['Neu', 'status-new', '#3b82f6'],
+    'contacted': ['Kontaktiert', 'status-contacted', '#f59e0b'],
+    'interested': ['Interessiert', 'status-interested', '#10b981'],
+    'meeting': ['Meeting', 'status-meeting', '#8b5cf6'],
+    'passed': ['Passed', 'status-passed', '#ef4444']
   };
-  const [label, cls] = map[status] || ['—', 'status-na'];
-  return `<span class="status-badge ${cls}" onclick="cycleStatus(${this?.id || 0})">${label}</span>`;
+  const allStatuses = ['new', 'contacted', 'interested', 'meeting', 'passed'];
+  const [label, cls, color] = map[status] || ['—', 'status-na', '#94a3b8'];
+  
+  let menuItems = allStatuses.map(s => {
+    const [l, c, col] = map[s];
+    return `<div class="status-menu-item ${s===status?'active':''}" onclick="event.stopPropagation(); setStatus(${id}, '${s}')">
+      <span class="status-dot" style="background:${col}"></span>${l}${s===status?' ✓':''}
+    </div>`;
+  }).join('');
+  
+  return `<div class="status-dropdown">
+    <span class="status-badge ${cls}" onclick="event.stopPropagation(); toggleMenu(${id})">${label}</span>
+    <div class="status-menu" id="menu-${id}">${menuItems}</div>
+  </div>`;
 }
 
 function renderTable() {
@@ -860,7 +880,7 @@ function renderTable() {
           ${l.email ? `<a class="contact-link" href="mailto:${l.email}" onclick="event.stopPropagation()">✉ ${l.email}</a>` : ''}
           ${l.linkedin ? `<br><a class="contact-link" href="${l.linkedin}" target="_blank" onclick="event.stopPropagation()">in LinkedIn</a>` : ''}
         </td>
-        <td><span class="status-badge status-${l.status}" onclick="event.stopPropagation(); cycleStatus(${l.id})">${{'new':'Neu','contacted':'Kontaktiert','interested':'Interessiert','meeting':'Meeting','passed':'Passed','na':'N/A'}[l.status]}</span></td>
+        <td>${getStatusBadge(l.status, l.id)}</td>
         <td><textarea class="notes-area" onclick="event.stopPropagation()" rows="2">${l.notes}</textarea></td>
         <td style="cursor:pointer;color:var(--text-secondary);font-size:16px;">▾</td>
       </tr>
@@ -905,13 +925,27 @@ function toggleDetail(id) {
   expandedRow = row.style.display === 'none' ? null : id;
 }
 
-function cycleStatus(id) {
-  const order = ['new', 'contacted', 'interested', 'meeting', 'passed'];
+function toggleMenu(id) {
+  // Close all other menus first
+  document.querySelectorAll('.status-menu.open').forEach(m => {
+    if (m.id !== `menu-${id}`) m.classList.remove('open');
+  });
+  const menu = document.getElementById(`menu-${id}`);
+  menu.classList.toggle('open');
+}
+
+function setStatus(id, status) {
   const lead = leads.find(l => l.id === id);
-  const idx = order.indexOf(lead.status);
-  lead.status = order[(idx + 1) % order.length];
+  lead.status = status;
+  // Close the menu
+  document.getElementById(`menu-${id}`).classList.remove('open');
   renderTable();
 }
+
+// Close menus when clicking outside
+document.addEventListener('click', () => {
+  document.querySelectorAll('.status-menu.open').forEach(m => m.classList.remove('open'));
+});
 
 function setFilter(btn, filter) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
